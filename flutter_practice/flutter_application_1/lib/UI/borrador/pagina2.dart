@@ -36,14 +36,34 @@ class _SegundaPaginaState extends State<SegundaPagina> {
             },
           ),
           title: const Text('Segunda pagina')),
-      body: Column(
+      body: Container(
+        width: double.infinity,
+        child:  Column( 
         children: [
+          Container(
+            height: 300,
+            width: 300,
+            decoration: const BoxDecoration(
+              image: DecorationImage(
+                fit: BoxFit.cover,
+                image: AssetImage(
+                  'assets/cachorros.jpg'
+                )
+              )
+            ),
+          ),
           Text(argumentos.usuario?.nombre ?? 'sin datos',
               style: TextStyle(fontSize: 20)),
           Text(argumentos.usuario?.edad.toString() ?? 'sin datos',
               style: TextStyle(fontSize: 20)),
+          Container(
+            height: 300,
+            width: 300,
+            child: Image.network('https://t0.gstatic.com/licensed-image?q=tbn:ANd9GcQkrjYxSfSHeCEA7hkPy8e2JphDsfFHZVKqx-3t37E4XKr-AT7DML8IwtwY0TnZsUcQ', fit: BoxFit.cover,),
+          )
         ],
       ),
+      )
     );
   }
 }

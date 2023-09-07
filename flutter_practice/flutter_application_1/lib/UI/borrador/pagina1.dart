@@ -1,6 +1,12 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/UI/Pages/pagina2.dart';
+import 'package:flutter_application_1/UI/borrador/pagina2.dart';
 import 'package:flutter_application_1/core/models/persona.dart';
+import 'package:flutter_application_1/core/controller/PeronsaController.dart';
+import 'package:hive/hive.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
 
 class Formulariopag extends StatefulWidget {
   @override
@@ -19,13 +25,26 @@ class FormulariopagState extends State<Formulariopag> {
   late bool seleccion;
   late String carrera;
   late String? pais;
+  late String respuesta;
   final Persona person = Persona(nombre: 'Luis Martin Vilca H', edad: 19);
+  final hivestore = Hive.box('hiveStore');
+  late final SharedPreferences preferencesStore;
+  void initSharedPreference() async {
+    preferencesStore = await SharedPreferences.getInstance();
+    var carreraPrefs = preferencesStore.getString('carrera') ?? '';
+    setState(() {
+      carrera = carreraPrefs;
+    });
+  }
+
   @override
   initState() {
-    _controller = TextEditingController(text: '');
-    _controller2 = TextEditingController(text: '');
+    initSharedPreference();
+    _controller = TextEditingController(text: hivestore.get('nombre'));
+    _controller2 = TextEditingController(text: hivestore.get('edad'));
     seleccion = false;
     carrera = '';
+    respuesta = '';
     pais = null;
     super.initState();
   }
@@ -128,8 +147,12 @@ class FormulariopagState extends State<Formulariopag> {
                               const SnackBar(
                                   content: Text("carrera no seleccionada")));
                         } else {
+                          hivestore.put('nombre', _controller.value.text);
+                          hivestore.put('edad', _controller2.value.text);
+                          preferencesStore.setString('carrera', carrera);
                           ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text("Correcto")));
+                              const SnackBar(
+                                  content: Text("Datos almacenados")));
                         }
                       }
                     }),
@@ -146,13 +169,10 @@ class FormulariopagState extends State<Formulariopag> {
                       //          usuario: person,
 
                       //        )));
-                              
-                      Navigator.pushNamed(context, 'segundapa', arguments: SegundaPaginaArgumentos(
-                        usuario: Persona(
-                          nombre: 'Martin',
-                          edad: 19
-                        )
-                      ));
+                      final controlador = PeronsaController(person);
+                      controlador.cambiarName('Enrique');
+                      Navigator.pushNamed(context, 'segundapa',
+                          arguments: SegundaPaginaArgumentos(usuario: person));
                     }),
                 const SizedBox(width: 9),
                 GestureDetector(
@@ -164,16 +184,31 @@ class FormulariopagState extends State<Formulariopag> {
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: const Text("cuatro")),
-                    onTap: () {
-                      print("Presion simple");
+                    onTap: () async {
+                      var url = Uri.parse(
+                          'https://jsonplaceholder.typicode.com/todos/1');
+                      var respuestaperticion = await http.get(url);
+                      var json = jsonDecode(respuestaperticion.body);
+                      setState(() {
+                        respuesta = json['title'];
+                      });
                     },
                     onLongPress: () {
                       print("presionado largo");
                     },
                     onDoubleTap: () {
                       print("Doble presionado");
-                    })
-              ])
+                    }),
+              ]),
+              Text(respuesta)
             ])));
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _controller2.dispose();
+    hivestore.close();
+    super.dispose();
   }
 }
